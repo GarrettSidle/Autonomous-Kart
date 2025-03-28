@@ -13,6 +13,61 @@ HORIZONTAL_FOV = 69
 FRAME_WIDTH = 640    
 CENTER_X = FRAME_WIDTH / 2 
 
+pipeline = None
+
+
+def camera_init():
+    global pipeline
+    
+    # Create OpenCV Trackbars for HSV tuning with default values for orange/yellow
+    cv2.namedWindow("Trackbars", cv2.WINDOW_NORMAL)  
+    cv2.resizeWindow("Trackbars", 640, 300)  
+    cv2.createTrackbar("H Min", "Trackbars", LOWER_RANGE[0], 180, update_hsv)
+    cv2.createTrackbar("S Min", "Trackbars", LOWER_RANGE[1], 255, update_hsv)
+    cv2.createTrackbar("V Min", "Trackbars", LOWER_RANGE[2], 255, update_hsv)
+    cv2.createTrackbar("H Max", "Trackbars", UPPER_RANGE[0], 180, update_hsv)
+    cv2.createTrackbar("S Max", "Trackbars", UPPER_RANGE[1], 255, update_hsv)
+    cv2.createTrackbar("V Max", "Trackbars", UPPER_RANGE[2], 255, update_hsv)
+    cv2.createTrackbar("threshold", "Trackbars", THRESHOLD, 10000, update_hsv)
+
+
+    # Create DepthAI pipeline
+    pipeline = dai.Pipeline()
+
+    # Create color camera node
+    cam = pipeline.create(dai.node.ColorCamera)
+    cam.setPreviewSize(640, 480)
+    cam.setInterleaved(False)
+    cam.setFps(30)
+
+    # Create MonoCamera nodes for stereo depth
+    mono_left = pipeline.create(dai.node.MonoCamera)
+    mono_right = pipeline.create(dai.node.MonoCamera)
+    mono_left.setResolution(dai.MonoCameraProperties.SensorResolution.THE_400_P)
+    mono_right.setResolution(dai.MonoCameraProperties.SensorResolution.THE_400_P)
+    mono_left.setBoardSocket(dai.CameraBoardSocket.LEFT)
+    mono_right.setBoardSocket(dai.CameraBoardSocket.RIGHT)
+
+    # Create StereoDepth node
+    depth = pipeline.create(dai.node.StereoDepth)
+    depth.setDefaultProfilePreset(dai.node.StereoDepth.PresetMode.HIGH_DENSITY)
+    depth.setLeftRightCheck(True)
+    depth.setExtendedDisparity(True)
+    depth.setSubpixel(True)
+
+    # Link mono cameras to the depth node
+    mono_left.out.link(depth.left)
+    mono_right.out.link(depth.right)
+
+    # Create XLinkOut for depth and color output
+    xout_video = pipeline.create(dai.node.XLinkOut)
+    xout_video.setStreamName("video")
+    cam.preview.link(xout_video.input)
+
+    xout_depth = pipeline.create(dai.node.XLinkOut)
+    xout_depth.setStreamName("depth")
+    depth.depth.link(xout_depth.input)
+    
 def update_hsv(_):
     global LOWER_RANGE, UPPER_RANGE, THRESHOLD
     try:
@@ -29,71 +84,14 @@ def update_hsv(_):
         THRESHOLD = threshold
     except:
         print("Error updating scaler values")
-
-
-# Create OpenCV Trackbars for HSV tuning with default values for orange/yellow
-cv2.namedWindow("Trackbars", cv2.WINDOW_NORMAL)  
-cv2.resizeWindow("Trackbars", 640, 300)  
-cv2.createTrackbar("H Min", "Trackbars", LOWER_RANGE[0], 180, update_hsv)
-cv2.createTrackbar("S Min", "Trackbars", LOWER_RANGE[1], 255, update_hsv)
-cv2.createTrackbar("V Min", "Trackbars", LOWER_RANGE[2], 255, update_hsv)
-cv2.createTrackbar("H Max", "Trackbars", UPPER_RANGE[0], 180, update_hsv)
-cv2.createTrackbar("S Max", "Trackbars", UPPER_RANGE[1], 255, update_hsv)
-cv2.createTrackbar("V Max", "Trackbars", UPPER_RANGE[2], 255, update_hsv)
-cv2.createTrackbar("threshold", "Trackbars", THRESHOLD, 10000, update_hsv)
-
-
-plt.ion()
-fig, ax = plt.subplots()
-ax.set_xlim(-320, 320)  
-ax.set_ylim(0, 320)  
-ax.set_xlabel("X Position ")
-ax.set_ylabel("Y Position ")
-scatter = ax.scatter([], [])  
-
-# Create DepthAI pipeline
-pipeline = dai.Pipeline()
-
-# Create color camera node
-cam = pipeline.create(dai.node.ColorCamera)
-cam.setPreviewSize(640, 480)
-cam.setInterleaved(False)
-cam.setFps(30)
-
-# Create MonoCamera nodes for stereo depth
-mono_left = pipeline.create(dai.node.MonoCamera)
-mono_right = pipeline.create(dai.node.MonoCamera)
-mono_left.setResolution(dai.MonoCameraProperties.SensorResolution.THE_400_P)
-mono_right.setResolution(dai.MonoCameraProperties.SensorResolution.THE_400_P)
-mono_left.setBoardSocket(dai.CameraBoardSocket.LEFT)
-mono_right.setBoardSocket(dai.CameraBoardSocket.RIGHT)
-
-# Create StereoDepth node
-depth = pipeline.create(dai.node.StereoDepth)
-depth.setDefaultProfilePreset(dai.node.StereoDepth.PresetMode.HIGH_DENSITY)
-depth.setLeftRightCheck(True)
-depth.setExtendedDisparity(True)
-depth.setSubpixel(True)
-
-# Link mono cameras to the depth node
-mono_left.out.link(depth.left)
-mono_right.out.link(depth.right)
-
-# Create XLinkOut for depth and color output
-xout_video = pipeline.create(dai.node.XLinkOut)
-xout_video.setStreamName("video")
-cam.preview.link(xout_video.input)
-
-xout_depth = pipeline.create(dai.node.XLinkOut)
-xout_depth.setStreamName("depth")
-depth.depth.link(xout_depth.input)
-
-# Connect to OAK-D
-with dai.Device(pipeline) as device:
-    video_queue = device.getOutputQueue(name="video", maxSize=1, blocking=False)
-    depth_queue = device.getOutputQueue(name="depth", maxSize=1, blocking=False)
-
-    while True:
+        
+        
+def get_cones():
+    # Connect to OAK-D
+    with dai.Device(pipeline) as device:
+        video_queue = device.getOutputQueue(name="video", maxSize=1, blocking=False)
+        depth_queue = device.getOutputQueue(name="depth", maxSize=1, blocking=False)
+    
         video_frame = video_queue.get().getCvFrame()
         depth_frame = depth_queue.get().getFrame()
 
@@ -155,17 +153,11 @@ with dai.Device(pipeline) as device:
         # Stack all three frames side by side
         combined_frame = np.hstack((video_frame, mask_colored, depth_colormap_resized))
         cv2.imshow("Color | Mask | Depth", combined_frame)
-        
-        
-        scatter.set_offsets(object_positions if object_positions else np.empty((0, 2)))
 
         plt.draw()
         plt.pause(0.01)
 
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-
-cv2.destroyAllWindows()
-
-
-    
+            cv2.destroyAllWindows()
+            
+        return object_positions
