@@ -1,7 +1,6 @@
 import cv2
 import depthai as dai
 import numpy as np
-import matplotlib.pyplot as plt
 import math
 
 # Default HSV range for detecting orange & yellow
@@ -14,10 +13,18 @@ FRAME_WIDTH = 640
 CENTER_X = FRAME_WIDTH / 2 
 
 pipeline = None
+cam = None
+mono_left = None
+mono_right = None
+depth = None
+xout_video = None
+xout_depth = None
+
+device = None
 
 
 def camera_init():
-    global pipeline
+    global pipeline, cam, mono_left, mono_right, depth, xout_depth, xout_video, device
     
     # Create OpenCV Trackbars for HSV tuning with default values for orange/yellow
     cv2.namedWindow("Trackbars", cv2.WINDOW_NORMAL)  
@@ -68,6 +75,8 @@ def camera_init():
     xout_depth.setStreamName("depth")
     depth.depth.link(xout_depth.input)
     
+    device = dai.Device(pipeline)
+    
 def update_hsv(_):
     global LOWER_RANGE, UPPER_RANGE, THRESHOLD
     try:
@@ -83,81 +92,74 @@ def update_hsv(_):
         UPPER_RANGE = np.array([h_max, s_max, v_max])
         THRESHOLD = threshold
     except:
-        print("Error updating scaler values")
+        pass
         
         
 def get_cones():
     # Connect to OAK-D
-    with dai.Device(pipeline) as device:
-        video_queue = device.getOutputQueue(name="video", maxSize=1, blocking=False)
-        depth_queue = device.getOutputQueue(name="depth", maxSize=1, blocking=False)
+
+    video_queue = device.getOutputQueue(name="video", maxSize=1, blocking=False)
+    depth_queue = device.getOutputQueue(name="depth", maxSize=1, blocking=False)
+
+    video_frame = video_queue.get().getCvFrame()
+    depth_frame = depth_queue.get().getFrame()
+
+    # Convert to HSV
+    hsv = cv2.cvtColor(video_frame, cv2.COLOR_BGR2HSV)
+    hsv[:, :, 1] = np.clip(hsv[:, :, 1] * 1.5, 0, 255)  # Increase saturation by 50%
+
+    # Apply the mask for orange detection
+    mask = cv2.inRange(hsv, LOWER_RANGE, UPPER_RANGE)
+
+    # Detect contours
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     
-        video_frame = video_queue.get().getCvFrame()
-        depth_frame = depth_queue.get().getFrame()
+    object_positions = []
 
-        # Convert to HSV
-        hsv = cv2.cvtColor(video_frame, cv2.COLOR_BGR2HSV)
-        hsv[:, :, 1] = np.clip(hsv[:, :, 1] * 1.5, 0, 255)  # Increase saturation by 50%
-
-        # Apply the mask for orange detection
-        mask = cv2.inRange(hsv, LOWER_RANGE, UPPER_RANGE)
-        filtered_frame = cv2.bitwise_and(video_frame, video_frame, mask=mask)
-
-        # Detect contours
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        
-        object_positions = []
-
-        for contour in contours:
-            if cv2.contourArea(contour) >= 50:
-                x, y, w, h = cv2.boundingRect(contour)
-                cx, cy = x + w // 2, y + h // 2
-                
-                angle_x = ((cx - CENTER_X) / CENTER_X) * (HORIZONTAL_FOV / 2)
-                angle_x = math.radians(angle_x)
-                
-    
-                
-                
-                # Retrieve depth value at the center of the detected object
-                depth_value = depth_frame[cy, cx] if 0 <= cx < 640 and 0 <= cy < 400 else 0
-                
-                pltc = (depth_value / 10000) * 3000
-                
-                pltx = pltc * math.cos(90 - angle_x)
-                plty = pltc * math.sin(90 - angle_x)
-                
-                object_positions.append((pltx, plty))
-                print((pltx, plty))
-                
-                if(depth_value == 0):
-                    print("oops")
-
-                elif(cv2.contourArea(contour) >= (20/depth_value) * THRESHOLD ):
-                    # Draw bounding box and depth value
-                    cv2.rectangle(video_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                    cv2.circle(video_frame, (cx, cy), 5, (255, 0, 0), -1)
-                    cv2.putText(video_frame, f"Depth: {depth_value}mm", (x, y + 10),
-                                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
-
-        # Normalize depth frame for visualization
-        depth_visual = cv2.normalize(depth_frame, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-        depth_colormap = cv2.applyColorMap(depth_visual, cv2.COLORMAP_JET)
-
-        # Resize depth image to match 480p resolution
-        depth_colormap_resized = cv2.resize(depth_colormap, (640, 480))
-
-        # Convert mask to 3-channel grayscale (so it can be stacked with color images)
-        mask_colored = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
-
-        # Stack all three frames side by side
-        combined_frame = np.hstack((video_frame, mask_colored, depth_colormap_resized))
-        cv2.imshow("Color | Mask | Depth", combined_frame)
-
-        plt.draw()
-        plt.pause(0.01)
-
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            cv2.destroyAllWindows()
+    for contour in contours:
+        if cv2.contourArea(contour) >= 50:
+            x, y, w, h = cv2.boundingRect(contour)
+            cx, cy = x + w // 2, y + h // 2
             
-        return object_positions
+            angle_x = ((cx - CENTER_X) / CENTER_X) * (HORIZONTAL_FOV / 2)
+            angle_x = math.radians(angle_x)
+            
+
+            
+            
+            # Retrieve depth value at the center of the detected object
+            depth_value = depth_frame[cy, cx] if 0 <= cx < 640 and 0 <= cy < 400 else 0
+            
+            pltc = (depth_value / 10000) * 3000
+            
+            pltx = pltc * math.cos(90 - angle_x)
+            plty = pltc * math.sin(90 - angle_x)
+            
+            object_positions.append((pltx, plty))
+            
+            if(depth_value == 0):
+                pass
+
+            elif(cv2.contourArea(contour) >= (20/depth_value) * THRESHOLD ):
+                # Draw bounding box and depth value
+                cv2.rectangle(video_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+                cv2.circle(video_frame, (cx, cy), 5, (255, 0, 0), -1)
+                cv2.putText(video_frame, f"Depth: {depth_value}mm", (x, y + 10),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+
+    # Normalize depth frame for visualization
+    depth_visual = cv2.normalize(depth_frame, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
+    depth_colormap = cv2.applyColorMap(depth_visual, cv2.COLORMAP_JET)
+
+    # Convert mask to 3-channel grayscale (so it can be stacked with color images)
+    mask_colored = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+
+    # Stack all three frames side by side
+    combined_frame = np.hstack((video_frame, mask_colored))
+    cv2.imshow("Color | Mask", combined_frame)
+
+
+    if cv2.waitKey(1) & 0xFF == ord('q'):
+        cv2.destroyAllWindows()
+        
+    return object_positions

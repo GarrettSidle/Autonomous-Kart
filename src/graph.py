@@ -15,7 +15,10 @@ DISTANCE_TO_BRAKE = 2.5
 STEARING_ARROW_LENGTH = 5
 
 
-plt.figure(figsize=(8, 6))
+plt.ion()  # Enable interactive mode
+fig, ax = plt.subplots(figsize=(8, 6))
+
+
 
 
 def graph(spline_values, cone_values, controls):
@@ -35,10 +38,10 @@ def graph(spline_values, cone_values, controls):
     print(f"Steering Angle: {stearing_angle}°, Throttle: {throttle}, Brake: {brake}")
     
         
-    plt.clf()
+    ax.clear()  # Clear previous frame
     
-    plt.scatter(right_cones_x, right_cones_y, color='blue', label='Right Cones')
-    plt.scatter(left_cones_x, left_cones_y, color='orange', label='Left Cones')
+    ax.scatter(right_cones_x, right_cones_y, color='blue', label='Right Cones')
+    ax.scatter(left_cones_x, left_cones_y, color='orange', label='Left Cones')
     
     
     # Convert the angle from degrees to radians
@@ -53,18 +56,21 @@ def graph(spline_values, cone_values, controls):
     plt.arrow(0, 0, x_end, y_end, head_width=0.1, head_length=0.1, fc='purple', ec='purple', label=f'{stearing_angle}°')
     
     
-    
+    ax.arrow(0, 0, x_end, y_end, head_width=0.1, head_length=0.1, fc='purple', ec='purple', label=f'{stearing_angle}°')
+
     # Plot splines
-    plt.plot(left_spline_x_values , left_spline_y_values , color='orange' , linestyle='-', label='Left Spline')
-    plt.plot(right_spline_x_values, right_spline_y_values, color='blue', linestyle='-', label='Right Spline')
-    
+    ax.plot(left_spline_x_values, left_spline_y_values, color='orange', linestyle='-', label='Left Spline')
+    ax.plot(right_spline_x_values, right_spline_y_values, color='blue', linestyle='-', label='Right Spline')
+
     brake_color = 'green' if brake else 'red'
-    plt.plot([0, 0], [0, DISTANCE_TO_BRAKE], color=brake_color, linestyle='-')
-    
-    plt.xlabel("X-axis")
-    plt.ylabel("Y-axis")
-    plt.title("Spline Plot of Right and Left Cones")
-    plt.legend()
-    plt.grid(True)
-    plt.show()
+    ax.plot([0, 0], [0, DISTANCE_TO_BRAKE], color=brake_color, linestyle='-')
+
+    ax.set_xlabel("X-axis")
+    ax.set_ylabel("Y-axis")
+    ax.set_title("Spline Plot of Right and Left Cones")
+    ax.legend()
+    ax.grid(True)
+
+    plt.draw()  # Update the plot
+    plt.pause(0.1)  # Pause to allow UI update
     
