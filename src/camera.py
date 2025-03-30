@@ -4,9 +4,9 @@ import numpy as np
 import math
 
 # Default HSV range for detecting orange & yellow
-LOWER_RANGE = np.array([10, 250, 110])  
-UPPER_RANGE = np.array([35, 255, 180])  
-THRESHOLD    = 500
+LOWER_RANGE = np.array([00, 79, 126])  
+UPPER_RANGE = np.array([19, 255, 255])  
+THRESHOLD    = 1
 
 HORIZONTAL_FOV = 69  
 FRAME_WIDTH = 640    
@@ -90,7 +90,7 @@ def update_hsv(_):
     
         LOWER_RANGE = np.array([h_min, s_min, v_min])
         UPPER_RANGE = np.array([h_max, s_max, v_max])
-        THRESHOLD = threshold
+        THRESHOLD = threshold / 1000
     except:
         pass
         
@@ -103,6 +103,11 @@ def get_cones():
 
     video_frame = video_queue.get().getCvFrame()
     depth_frame = depth_queue.get().getFrame()
+
+    alpha = 1.5  # Contrast control (1.0-3.0)
+    beta = 0     # Brightness control (0-100)
+
+    video_frame = cv2.convertScaleAbs(video_frame, alpha=alpha, beta=beta)
 
     # Convert to HSV
     hsv = cv2.cvtColor(video_frame, cv2.COLOR_BGR2HSV)
@@ -130,12 +135,11 @@ def get_cones():
             # Retrieve depth value at the center of the detected object
             depth_value = depth_frame[cy, cx] if 0 <= cx < 640 and 0 <= cy < 400 else 0
             
-            pltc = (depth_value / 10000) * 3000
+            depth_value = (depth_value / 1000) 
             
-            pltx = pltc * math.cos(90 - angle_x)
-            plty = pltc * math.sin(90 - angle_x)
+            pltx = depth_value * math.cos(90 - angle_x)
+            plty = depth_value * math.sin(90 - angle_x)
             
-            object_positions.append((pltx, plty))
             
             if(depth_value == 0):
                 pass
@@ -144,12 +148,11 @@ def get_cones():
                 # Draw bounding box and depth value
                 cv2.rectangle(video_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
                 cv2.circle(video_frame, (cx, cy), 5, (255, 0, 0), -1)
-                cv2.putText(video_frame, f"Depth: {depth_value}mm", (x, y + 10),
+                cv2.putText(video_frame, f"Depth: {depth_value}m", (x, y + 10),
                             cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+                
+                object_positions.append((pltx, plty))
 
-    # Normalize depth frame for visualization
-    depth_visual = cv2.normalize(depth_frame, None, 0, 255, cv2.NORM_MINMAX).astype(np.uint8)
-    depth_colormap = cv2.applyColorMap(depth_visual, cv2.COLORMAP_JET)
 
     # Convert mask to 3-channel grayscale (so it can be stacked with color images)
     mask_colored = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)

@@ -71,6 +71,6 @@ def graph(spline_values, cone_values, controls):
     ax.legend()
     ax.grid(True)
 
-    plt.draw()  # Update the plot
-    plt.pause(0.1)  # Pause to allow UI update
+    plt.draw() 
+    plt.pause(0.1)  
     
