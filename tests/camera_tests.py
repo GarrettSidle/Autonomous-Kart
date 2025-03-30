@@ -15,6 +15,7 @@ import graph
 
 camera.camera_init()
 
+plt.close('all')  # Close all existing figures
 plt.ion()
 fig, ax = plt.subplots()
 
@@ -31,8 +32,8 @@ while(True):
     ax.scatter(x_coords, y_coords, color='blue', label='Points')
     
     # Set axis limits
-    ax.set_xlim(-10, 10)
-    ax.set_ylim(0, 10)
+    ax.set_xlim(-4, 4)
+    ax.set_ylim(0, 4)
 
     # Labels and grid
     ax.set_xlabel('X-axis')
