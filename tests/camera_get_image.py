@@ -9,7 +9,7 @@ pipeline = dai.Pipeline()
 # Define a color camera
 cam_rgb = pipeline.create(dai.node.ColorCamera)
 cam_rgb.setBoardSocket(dai.CameraBoardSocket.RGB)
-cam_rgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_1080_P)
+cam_rgb.setResolution(dai.ColorCameraProperties.SensorResolution.THE_4_K)
 cam_rgb.setInterleaved(False)
 
 # Create an XLinkOut node to output images
