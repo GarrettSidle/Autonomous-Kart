@@ -16,19 +16,16 @@ from test_values import cones_set
 
 for i in range(len(cones_set)):
     
-    try:
-        cones = cones_set[i]
+    cones = cones_set[i]
 
-        #create a spline for the left and right barriers
-        splines, spline_values, cone_values = spline.getSpline(cones)
+    #create a spline for the left and right barriers
+    splines, spline_values, cone_values = spline.getSpline(cones)
 
-        #calculate the kart controls 
-        controls = car_control.get_controls(splines, cone_values)
-        
-        #graph and display the values
-        graph.graph(spline_values, cone_values, controls)
-        
-        time.sleep(5)
-    except Exception as e:
-        print(f"failed on test {i}: {e}")
+    #calculate the kart controls 
+    controls = car_control.get_controls(splines, cone_values)
+    
+    #graph and display the values
+    graph.graph(spline_values, cone_values, controls)
+    
+    time.sleep(5)
     

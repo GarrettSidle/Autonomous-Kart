@@ -11,8 +11,8 @@ import numpy as np
 # current stearing angle    x
 
 
-DISTANCE_TO_BRAKE = 2.5
-STEARING_ARROW_LENGTH = 5
+DISTANCE_TO_BRAKE = 2
+STEARING_ARROW_LENGTH = 2.5
 
 
 plt.ion()  # Enable interactive mode
@@ -52,10 +52,7 @@ def graph(spline_values, cone_values, controls):
     y_end = STEARING_ARROW_LENGTH * np.cos(angle_rad)
 
     
-    # Plot the vector from (0, 0) to the calculated endpoint
-    plt.arrow(0, 0, x_end, y_end, head_width=0.1, head_length=0.1, fc='purple', ec='purple', label=f'{stearing_angle}°')
-    
-    
+
     ax.arrow(0, 0, x_end, y_end, head_width=0.1, head_length=0.1, fc='purple', ec='purple', label=f'{stearing_angle}°')
 
     # Plot splines

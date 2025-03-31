@@ -161,7 +161,8 @@ def calculate_splines(left_cones, right_cones):
     # Create splines for left and right cones
     left_spline  = None
     right_spline = None
-    print(left_cone_x_values, left_cone_y_values)
+    
+    
     if len(left_cone_x_values) > 2 and len(set(left_cone_x_values)) == len(left_cone_x_values):
         left_spline = interp1d(left_cone_x_values, left_cone_y_values)
         left_spline_x_values = np.linspace(min(left_cone_x_values), max(left_cone_x_values), 100)
@@ -184,5 +185,4 @@ def calculate_splines(left_cones, right_cones):
         (left_cone_x_values , left_cone_y_values),
         (right_cone_x_values, right_cone_y_values))
     
-        
     return splines, spline_values, cone_values

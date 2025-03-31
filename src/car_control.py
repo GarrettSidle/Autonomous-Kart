@@ -18,12 +18,24 @@ def get_controls(splines, cone_values):
     return stearing_angle, throttle, brake
 
 
-def find_x_given_y(y_target, spline, x_range):
-    def func(x):
-        return spline(x) - y_target
+def find_x_given_y(y_value, x_coords, y_coords):
+    below_x = None
+    above_x = None
+    
+    # Iterate over the y values and find the closest points
+    for i in range(1, len(y_coords)):
+        if y_coords[i] >= y_value:
+            above_x = x_coords[i]
+            below_x = x_coords[i - 1]
+            break
 
-    result = root_scalar(func, bracket=x_range, method='brentq')
-    return result.root if result.converged else None
+    # If closest points are found, return the average
+    if below_x is not None and above_x is not None:
+        return (below_x + above_x) / 2
+    else:
+        return None  # In case no valid points are found
+
+
 
 def find_y_given_x(x_target, spline, y_range):
     def func(y):
@@ -34,31 +46,32 @@ def find_y_given_x(x_target, spline, y_range):
 
 def find_stearing_angle(splines, cone_values):
     
-    DISTANCE_TO_STEAR_ANGLE = 3.5
+    DISTANCE_TO_STEAR_ANGLE = 2.5
     
     left_spline, right_spline  = splines
     
-    left_cone, right_cone  = cone_values
+    left_cones, right_cones  = cone_values
+
+
     
-    left_cones_x , left_cones_y  = left_cone
-    right_cones_x, right_cones_y = right_cone
+    if(left_spline == None and right_spline == None):
+        return 0 
     
     
     
     left_x_at_y = 0        
     right_x_at_y= 0
-    if left_spline is not None:
-        left_x_at_y  = find_x_given_y(DISTANCE_TO_STEAR_ANGLE, left_spline, (min(left_cones_x), max(left_cones_x)))
-    if right_spline is not None:
-        right_x_at_y = find_x_given_y(DISTANCE_TO_STEAR_ANGLE, right_spline, (min(right_cones_x), max(right_cones_x)))
+    if len(left_cones[0]) != 0:
+        left_x_at_y  = find_x_given_y(DISTANCE_TO_STEAR_ANGLE, left_cones[0], left_cones[1])
+    if len(right_cones[0]) != 0:
+        right_x_at_y = find_x_given_y(DISTANCE_TO_STEAR_ANGLE, right_cones[0], right_cones[1])
     
     mid_point_x = (right_x_at_y + left_x_at_y) / 2
     
     angle_radian = math.atan(mid_point_x / DISTANCE_TO_STEAR_ANGLE)
     
     
-    angle =  np.degrees(angle_radian)
-    
+    angle =  math.degrees(angle_radian)
     return angle
     
 def find_speed(splines, cone_values):

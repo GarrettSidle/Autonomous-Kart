@@ -62,7 +62,7 @@ for i in range(len(cones_set)):
     if(len(cones_set[i]) == 0):
         continue
     
-    print(cones_set[i])
+
     left, right = separate_points(cones_set[i])
     
     update_plot(left, right)
