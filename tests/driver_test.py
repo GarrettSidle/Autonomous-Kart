@@ -27,5 +27,5 @@ for i in range(len(cones_set)):
     #graph and display the values
     graph.graph(spline_values, cone_values, controls)
     
-    time.sleep(5)
+    time.sleep(10)
     

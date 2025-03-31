@@ -19,6 +19,11 @@ def get_controls(splines, cone_values):
 
 
 def find_x_given_y(y_value, x_coords, y_coords):
+    
+    sorted_pairs = sorted(zip(x_coords, y_coords))
+    x_coords, y_coords = zip(*sorted_pairs)  # Unzip back into separate lists
+    
+    
     below_x = None
     above_x = None
     
@@ -37,12 +42,28 @@ def find_x_given_y(y_value, x_coords, y_coords):
 
 
 
-def find_y_given_x(x_target, spline, y_range):
-    def func(y):
-        return spline(y) - x_target
+def find_y_given_x(x_value, x_coords, y_coords):
+    sorted_pairs = sorted(zip(x_coords, y_coords))
+    x_coords, y_coords = zip(*sorted_pairs)  # Unzip back into separate lists
     
-    result = root_scalar(func, bracket=y_range, method='brentq')
-    return result.root if result.converged else None
+    below_x, below_y = None, None
+    above_x, above_y = None, None
+    
+    
+    # Find the closest points above and below x_value
+    for i in range(1, len(x_coords)):
+        if x_coords[i] >= x_value:
+            above_x, above_y = x_coords[i], y_coords[i]
+            below_x, below_y = x_coords[i - 1], y_coords[i - 1]
+            break
+
+    # If we found two valid points, calculate the y-intercept
+    if below_x is not None and above_x is not None and below_x != above_x:
+        m = (above_y - below_y) / (above_x - below_x)  # Slope
+        b = below_y - m * below_x  # y-intercept
+        return b
+    
+    return 100 # Return None if no valid points were found
 
 def find_stearing_angle(splines, cone_values):
     
@@ -116,10 +137,7 @@ def find_speed(splines, cone_values):
     return 1 - (SPEED_SENSITIVITY * np.mean(normalized_curvature))
 
 def find_brake(splines, cone_values):
-    DISTANCE_TO_BRAKE = 2.5
-    
-    return True
-    
+    DISTANCE_TO_BRAKE = 1.5
     
     left_spline, right_spline  = splines
     
@@ -128,18 +146,18 @@ def find_brake(splines, cone_values):
     left_cones_x , left_cones_y  = left_cone
     right_cones_x, right_cones_y = right_cone
     
-    left_x_at_0  = 100
-    right_x_at_0 = 100
+    left_y_at_0  = 100
+    right_y_at_0 = 100
 
-    # Check if the left spline is available
-    if left_spline is not None:
-        left_x_at_0 = find_y_given_x(0, left_spline, (0, max(left_cones_x)))
+    if len(left_cones_x) != 0:
+        left_y_at_0 = find_y_given_x(0, left_cones_x, left_cones_y)
 
-    # Check if the right spline is available
-    if right_spline is not None:
-        right_x_at_0 = find_y_given_x(0, right_spline, (0, max(right_cones_x)))
+
+    if len(right_cones_x) != 0:
+        right_y_at_0 = find_y_given_x(0, right_cones_x, right_cones_y)
         
         
-    closest_wall = min(left_x_at_0, right_x_at_0)
+    closest_wall = min(left_y_at_0, right_y_at_0)
+    print(left_y_at_0, right_y_at_0)
     
     return (closest_wall <= DISTANCE_TO_BRAKE)

@@ -11,7 +11,7 @@ import numpy as np
 # current stearing angle    x
 
 
-DISTANCE_TO_BRAKE = 2
+DISTANCE_TO_BRAKE = 1.5
 STEARING_ARROW_LENGTH = 2.5
 
 
@@ -56,10 +56,10 @@ def graph(spline_values, cone_values, controls):
     ax.arrow(0, 0, x_end, y_end, head_width=0.1, head_length=0.1, fc='purple', ec='purple', label=f'{stearing_angle}°')
 
     # Plot splines
-    ax.plot(left_spline_x_values, left_spline_y_values, color='orange', linestyle='-', label='Left Spline')
-    ax.plot(right_spline_x_values, right_spline_y_values, color='blue', linestyle='-', label='Right Spline')
+    ax.plot(left_spline_x_values, left_spline_y_values, color='orange', linestyle='-')
+    ax.plot(right_spline_x_values, right_spline_y_values, color='blue', linestyle='-')
 
-    brake_color = 'green' if brake else 'red'
+    brake_color = 'red' if brake else 'green'
     ax.plot([0, 0], [0, DISTANCE_TO_BRAKE], color=brake_color, linestyle='-')
 
     ax.set_xlabel("X-axis")
