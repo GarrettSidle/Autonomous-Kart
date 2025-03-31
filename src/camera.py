@@ -6,8 +6,8 @@ import math
 
 
 #orange reflector on front
-REFLECT_LOWER_RANGE = np.array([9, 255, 190])  
-REFLECT_UPPER_RANGE = np.array([15, 255, 255])  
+REFLECT_LOWER_RANGE = np.array([0, 117, 105])  
+REFLECT_UPPER_RANGE = np.array([103, 255, 255])  
 
 #yellow housing
 HOUSING_LOWER_RANGE = np.array([00, 197, 197])  
@@ -140,13 +140,13 @@ def get_cones(isTest=False, image_path = None):
         video_frame = video_queue.get().getCvFrame()
         depth_frame = depth_queue.get().getFrame()
 
-    alpha = 1.5  # Contrast control (1.0-3.0)
-    beta = 0     # Brightness control (0-100)
+    alpha = 1.2 # Contrast control (1.0-3.0)
+    beta = -75    # Brightness control (0-100)
 
-    video_frame = cv2.convertScaleAbs(video_frame, alpha=alpha, beta=beta)
+    video_frame_darkened = cv2.convertScaleAbs(video_frame, alpha=alpha, beta=beta)
 
     # Convert to HSV
-    hsv = cv2.cvtColor(video_frame, cv2.COLOR_BGR2HSV)
+    hsv = cv2.cvtColor(video_frame_darkened, cv2.COLOR_BGR2HSV)
     hsv[:, :, 1] = np.clip(hsv[:, :, 1] * 1.5, 0, 255)  # Increase saturation by 50%
 
     # Apply masks for the orange reflector and yellow housing
@@ -191,24 +191,29 @@ def get_cones(isTest=False, image_path = None):
         
             elif(depth_value >= -0.038 * np.log((area + THRESHOLD)**2) - 0.703 * np.log(area + THRESHOLD) + 0.07 or (depth_value >= 1.5 and area != 0)):
                 # Draw bounding box and depth value
-                cv2.rectangle(video_frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
-                cv2.circle(video_frame, (cx, cy), 5, (255, 0, 0), -1)
-                cv2.putText(video_frame, f"{cv2.contourArea(contour)}, {depth_value}", (x, y + 10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 255), 2)
+                cv2.rectangle(video_frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
+                cv2.circle(video_frame, (cx, cy), 3, (255, 0, 0), -1)
                 
                 object_positions.append((pltx, plty))
 
 
     # Convert masks to 3-channel grayscale for display
-    reflect_colored = cv2.cvtColor(reflect_mask, cv2.COLOR_GRAY2BGR)
-    housing_colored = cv2.cvtColor(housing_mask, cv2.COLOR_GRAY2BGR)
     combined_colored = cv2.cvtColor(mask, cv2.COLOR_GRAY2BGR)
+    
+    # Convert depth to an 8-bit image for visualization
+    depth_frame_vis = cv2.normalize(depth_frame, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
+    depth_frame_vis = cv2.applyColorMap(depth_frame_vis, cv2.COLORMAP_JET)
 
-    # Stack all frames side by side
-    combined_frame = np.hstack((video_frame, reflect_colored, housing_colored, combined_colored))
+
+    # Create a blank white image for the empty plot
+    empty_plot = np.ones((480, 640, 3), dtype=np.uint8) * 255
+    
+    top_row = np.hstack((video_frame, combined_colored))
+    bottom_row = np.hstack((depth_frame_vis, empty_plot))
+    grid = np.vstack((top_row, bottom_row))
 
     # Show the stacked frames
-    cv2.imshow("Original | Reflector Mask | Housing Mask | Combined Mask", combined_frame)
+    cv2.imshow("Original | Combined Mask | Depth | Chart", grid)
 
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
