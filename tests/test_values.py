@@ -681,26 +681,6 @@ spline_values_set = [
     (([], []), ([], [])),
 ]
 
-
-splines_set = []
-for cone_values in cone_values_set:
-    
-    left_cone, right_cone  = cone_values
-    
-    left_cones_x , left_cones_y  = left_cone
-    right_cones_x, right_cones_y = right_cone
-    
-    left_spline  = None
-    right_spline = None
-    
-    if len(left_cones_x) > 2 and len(set(left_cones_x)) == len(left_cones_x):
-        left_spline  = CubicSpline(left_cones_x, left_cones_y)
-    if len(right_cones_x) > 2 and len(set(right_cones_x)) == len(right_cones_x):
-        right_spline = CubicSpline(right_cones_x, right_cones_y)
-    
-    splines = (left_spline, right_spline)
-
-    splines_set.append(splines)
     
 controls_set = [
     (np.float64(22.024874122531642), 0, True),

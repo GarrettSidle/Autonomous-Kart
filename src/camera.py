@@ -127,14 +127,18 @@ def update_hsv(_):
         pass
         
         
-def get_cones():
+def get_cones(isTest=False, image_path = None):
     # Connect to OAK-D
+    if(isTest):
+        print(cv2.imread(image_path))
+        video_frame = cv2.resize(cv2.imread(image_path), (640, 480))
+        depth_frame = np.full((480, 640), 5000, dtype=np.uint16) 
+    else:
+        video_queue = device.getOutputQueue(name="video", maxSize=1, blocking=False)
+        depth_queue = device.getOutputQueue(name="depth", maxSize=1, blocking=False)
 
-    video_queue = device.getOutputQueue(name="video", maxSize=1, blocking=False)
-    depth_queue = device.getOutputQueue(name="depth", maxSize=1, blocking=False)
-
-    video_frame = video_queue.get().getCvFrame()
-    depth_frame = depth_queue.get().getFrame()
+        video_frame = video_queue.get().getCvFrame()
+        depth_frame = depth_queue.get().getFrame()
 
     alpha = 1.5  # Contrast control (1.0-3.0)
     beta = 0     # Brightness control (0-100)
