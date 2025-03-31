@@ -1,16 +1,15 @@
 import numpy as np
-from scipy.interpolate import CubicSpline
 import math
 from scipy.optimize import root_scalar
 
-def get_controls(splines, cone_values):
+def get_controls(cone_values):
     
     
-    stearing_angle = find_stearing_angle(splines, cone_values)
+    stearing_angle = find_stearing_angle(cone_values)
     
-    throttle       = find_speed(splines, cone_values)
+    throttle       = find_speed(cone_values)
     
-    brake          = find_brake(splines, cone_values)
+    brake          = find_brake(cone_values)
     
     if(brake ):
         throttle = 0
@@ -38,7 +37,7 @@ def find_x_given_y(y_value, x_coords, y_coords):
     if below_x is not None and above_x is not None:
         return (below_x + above_x) / 2
     else:
-        return None  # In case no valid points are found
+        return 0  # In case no valid points are found
 
 
 
@@ -65,20 +64,12 @@ def find_y_given_x(x_value, x_coords, y_coords):
     
     return 100 # Return None if no valid points were found
 
-def find_stearing_angle(splines, cone_values):
+def find_stearing_angle(cone_values):
     
     DISTANCE_TO_STEAR_ANGLE = 2.5
     
-    left_spline, right_spline  = splines
-    
     left_cones, right_cones  = cone_values
 
-
-    
-    if(left_spline == None and right_spline == None):
-        return 0 
-    
-    
     
     left_x_at_y = 0        
     right_x_at_y= 0
@@ -95,51 +86,56 @@ def find_stearing_angle(splines, cone_values):
     angle =  math.degrees(angle_radian)
     return angle
     
-def find_speed(splines, cone_values):
-    SPEED_SENSITIVITY = 5
+def find_speed(cone_values):
+    SPEED_SENSITIVITY = 10
     
     
-    left_spline, right_spline  = splines
+    curviness = ((calculate_curviness(cone_values[1][0],cone_values[1][1]) + calculate_curviness(cone_values[0][0],cone_values[0][1])))/2
+    out = curviness * SPEED_SENSITIVITY
+    if(out > 1):
+        out = 1
     
-    left_cone, right_cone  = cone_values
+    return 1 - out
     
-    left_cones_x , left_cones_y  = left_cone
-    right_cones_x, right_cones_y = right_cone
-    
-    
-    if left_spline is None or right_spline is None:
-        return None
-    
-    # Generate y-values across the range of both splines
-    y_values = np.linspace(min(left_spline.x[0], right_spline.x[0]), max(left_spline.x[-1], right_spline.x[-1]), 100)
-    
-    # Get the x-values of the middle spline (average of left and right splines at each y)
-    mid_x_values = [(left_spline(y) + right_spline(y)) / 2 for y in y_values]
-    
-    # Create the middle spline
-    middle_spline = CubicSpline(y_values, mid_x_values)
-    
-    # Calculate the first and second derivatives of the spline
-    dx = middle_spline.derivative(1)
-    ddx = middle_spline.derivative(2)
-    
-    # Calculate velocity (magnitude of first derivative) at each point
-    velocity = np.sqrt(dx(y_values)**2 + ddx(y_values)**2)
-    
-    # Calculate curvature using the standard formula
-    curvature = np.abs(ddx(y_values)) / (1 + dx(y_values)**2)**(3/2)
-    
-    # Normalize the curvature between 0 and 1
-    max_curvature = np.max(curvature)
-    normalized_curvature = curvature / max_curvature if max_curvature != 0 else curvature
-    
+def calculate_curviness(x, y):
+    if len(x) < 3 or len(y) < 3 or len(x) != len(y):
+        return 0  # Need at least 3 points to measure curvature
 
-    return 1 - (SPEED_SENSITIVITY * np.mean(normalized_curvature))
+    angles = []
 
-def find_brake(splines, cone_values):
+    for i in range(1, len(x) - 1):
+        p1 = np.array([x[i - 1], y[i - 1]])
+        p2 = np.array([x[i], y[i]])
+        p3 = np.array([x[i + 1], y[i + 1]])
+
+        # Compute vectors
+        v1 = p2 - p1
+        v2 = p3 - p2
+
+        # Compute angle between vectors
+        dot_product = np.dot(v1, v2)
+        magnitude = np.linalg.norm(v1) * np.linalg.norm(v2)
+
+        if magnitude == 0:
+            continue  # Avoid division by zero
+
+        cos_theta = np.clip(dot_product / magnitude, -1, 1)
+        angle = np.arccos(cos_theta)  # Angle in radians
+
+        angles.append(angle)
+
+    if not angles:
+        return 0  # No valid angles found
+
+    # Sum absolute angles and normalize
+    total_curvature = sum(angles) / (len(x) - 2)
+    max_possible_curvature = np.pi  # Theoretical max per turn
+
+    return min(total_curvature / max_possible_curvature, 1)
+
+def find_brake(cone_values):
     DISTANCE_TO_BRAKE = 1.5
-    
-    left_spline, right_spline  = splines
+
     
     left_cone, right_cone  = cone_values
     
@@ -158,6 +154,5 @@ def find_brake(splines, cone_values):
         
         
     closest_wall = min(left_y_at_0, right_y_at_0)
-    print(left_y_at_0, right_y_at_0)
     
     return (closest_wall <= DISTANCE_TO_BRAKE)

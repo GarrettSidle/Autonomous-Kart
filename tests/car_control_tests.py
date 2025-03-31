@@ -13,16 +13,14 @@ import graph
 
 
 
-from test_values import splines_set, cone_values_set
+from test_values import cone_values_set
 
-for i in range(len(splines_set)):
+for i in range(len(cone_values_set)):
     
     try:
-        splines = splines_set[i]
-        
         cone_values = cone_values_set[i]
 
-        controls = car_control.get_controls(splines, cone_values)
+        controls = car_control.get_controls(cone_values)
         print(controls)
         
     except Exception as e:

@@ -22,10 +22,10 @@ def getSpline(cones):
     
     left_cones, right_cones = designateSides(unclaimed_cones, left_candidates, right_candidates, left_start, right_start)
 
-    splines, spline_values, cone_values = calculate_splines(left_cones, right_cones)
+    spline_values, cone_values = calculate_splines(left_cones, right_cones)
 
     
-    return splines, spline_values, cone_values
+    return spline_values, cone_values
     
 
 
@@ -177,7 +177,6 @@ def calculate_splines(left_cones, right_cones):
     else:
         right_spline_x_values, right_spline_y_values = right_cone_x_values, right_cone_y_values
         
-    splines = (left_spline, right_spline)
     spline_values = (
         (left_spline_x_values , left_spline_y_values),
         (right_spline_x_values, right_spline_y_values))
@@ -185,4 +184,4 @@ def calculate_splines(left_cones, right_cones):
         (left_cone_x_values , left_cone_y_values),
         (right_cone_x_values, right_cone_y_values))
     
-    return splines, spline_values, cone_values
+    return spline_values, cone_values
