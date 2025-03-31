@@ -18,7 +18,7 @@ camera.camera_init()
 
 while(1):
     
-    cones = camera.get_cones(True, image_path = Path(__file__).resolve().parent.parent / "test_images" / "image_0004.jpg")
+    cones = camera.get_cones(True, image_path = Path(__file__).resolve().parent.parent / "test_images" / "test.jpg")
 
     #create a spline for the left and right barriers
     spline_values, cone_values = spline.getSpline(cones)

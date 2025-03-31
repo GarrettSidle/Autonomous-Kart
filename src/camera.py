@@ -204,12 +204,11 @@ def get_cones(isTest=False, image_path = None):
     depth_frame_vis = cv2.normalize(depth_frame, None, 0, 255, cv2.NORM_MINMAX, dtype=cv2.CV_8U)
     depth_frame_vis = cv2.applyColorMap(depth_frame_vis, cv2.COLORMAP_JET)
 
-
-    # Create a blank white image for the empty plot
-    empty_plot = np.ones((480, 640, 3), dtype=np.uint8) * 255
     
+
+    # Stack images into a 2x2 grid
     top_row = np.hstack((video_frame, combined_colored))
-    bottom_row = np.hstack((depth_frame_vis, empty_plot))
+    bottom_row = np.hstack((depth_frame_vis, depth_frame_vis))
     grid = np.vstack((top_row, bottom_row))
 
     # Show the stacked frames
