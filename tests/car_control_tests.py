@@ -25,6 +25,6 @@ for i in range(len(splines_set)):
         controls = car_control.get_controls(splines, cone_values)
         print(controls)
         
-    except:
-        print(f"failed on test {i}")
+    except Exception as e:
+        print(f"failed on test {i}: {e}")
     

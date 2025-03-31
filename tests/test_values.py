@@ -701,6 +701,20 @@ for cone_values in cone_values_set:
     splines = (left_spline, right_spline)
 
     splines_set.append(splines)
+    
+controls_set = [
+    (np.float64(22.024874122531642), 0, True),
+    (np.float64(22.024874122531642), 0, True),
+    (np.float64(22.024874122531642), 0, True),
+    (np.float64(22.024874122531642), 0, True),
+    (np.float64(22.024874122531642), 0, True),
+    (np.float64(22.024874122531642), 0, True),
+    (np.float64(22.024874122531642), 0, True),
+    (np.float64(22.024874122531642), 0, True),
+    (np.float64(22.024874122531642), 0, True),
+    (np.float64(22.024874122531642), 0, True),
+    (np.float64(22.024874122531642), 0, True)
+]
 
 
 

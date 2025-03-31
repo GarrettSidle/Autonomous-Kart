@@ -29,6 +29,6 @@ for i in range(len(cones_set)):
         graph.graph(spline_values, cone_values, controls)
         
         time.sleep(5)
-    except:
-        print(f"failed on test {i}")
+    except Exception as e:
+        print(f"failed on test {i}: {e}")
     

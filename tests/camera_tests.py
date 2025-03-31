@@ -23,7 +23,7 @@ fig, ax = plt.subplots()
 
 while(True):
     cones = camera.get_cones()
-    print(cones)
+
     
     
     ax.clear()  # Clear previous points
