@@ -5,13 +5,7 @@ import math
 
 
 
-#orange reflector on front
-REFLECT_LOWER_RANGE = np.array([0, 117, 105])  
-REFLECT_UPPER_RANGE = np.array([103, 255, 255])  
-
-#yellow housing
-HOUSING_LOWER_RANGE = np.array([00, 197, 197])  
-HOUSING_UPPER_RANGE = np.array([34, 255, 255])  
+from utils import HEADLESS, HOUSING_LOWER_RANGE, HOUSING_UPPER_RANGE, REFLECT_LOWER_RANGE, REFLECT_UPPER_RANGE
 
 
 
@@ -38,24 +32,25 @@ kernel = np.ones((7,7), np.uint8)
 def camera_init():
     global pipeline, cam, mono_left, mono_right, depth, xout_depth, xout_video, device
     
-    # Create OpenCV Trackbars for HSV tuning with default values for orange/yellow
-    cv2.namedWindow("Trackbars", cv2.WINDOW_NORMAL)  
-    cv2.resizeWindow("Trackbars", 640, 300)  
-    cv2.createTrackbar("Reflector H Min", "Trackbars", REFLECT_LOWER_RANGE[0], 180, update_hsv)
-    cv2.createTrackbar("Reflector S Min", "Trackbars", REFLECT_LOWER_RANGE[1], 255, update_hsv)
-    cv2.createTrackbar("Reflector V Min", "Trackbars", REFLECT_LOWER_RANGE[2], 255, update_hsv)
-    cv2.createTrackbar("Reflector H Max", "Trackbars", REFLECT_UPPER_RANGE[0], 180, update_hsv)
-    cv2.createTrackbar("Reflector S Max", "Trackbars", REFLECT_UPPER_RANGE[1], 255, update_hsv)
-    cv2.createTrackbar("Reflector V Max", "Trackbars", REFLECT_UPPER_RANGE[2], 255, update_hsv)
-    
-    cv2.createTrackbar("Housing H Min", "Trackbars", HOUSING_LOWER_RANGE[0], 180, update_hsv)
-    cv2.createTrackbar("Housing S Min", "Trackbars", HOUSING_LOWER_RANGE[1], 255, update_hsv)
-    cv2.createTrackbar("Housing V Min", "Trackbars", HOUSING_LOWER_RANGE[2], 255, update_hsv)
-    cv2.createTrackbar("Housing H Max", "Trackbars", HOUSING_UPPER_RANGE[0], 180, update_hsv)
-    cv2.createTrackbar("Housing S Max", "Trackbars", HOUSING_UPPER_RANGE[1], 255, update_hsv)
-    cv2.createTrackbar("Housing V Max", "Trackbars", HOUSING_UPPER_RANGE[2], 255, update_hsv)
-    
-    cv2.createTrackbar("threshold", "Trackbars", THRESHOLD, 500, update_hsv)
+    if(not HEADLESS):
+        # Create OpenCV Trackbars for HSV tuning with default values for orange/yellow
+        cv2.namedWindow("Trackbars", cv2.WINDOW_NORMAL)  
+        cv2.resizeWindow("Trackbars", 640, 300)  
+        cv2.createTrackbar("Reflector H Min", "Trackbars", REFLECT_LOWER_RANGE[0], 180, update_hsv)
+        cv2.createTrackbar("Reflector S Min", "Trackbars", REFLECT_LOWER_RANGE[1], 255, update_hsv)
+        cv2.createTrackbar("Reflector V Min", "Trackbars", REFLECT_LOWER_RANGE[2], 255, update_hsv)
+        cv2.createTrackbar("Reflector H Max", "Trackbars", REFLECT_UPPER_RANGE[0], 180, update_hsv)
+        cv2.createTrackbar("Reflector S Max", "Trackbars", REFLECT_UPPER_RANGE[1], 255, update_hsv)
+        cv2.createTrackbar("Reflector V Max", "Trackbars", REFLECT_UPPER_RANGE[2], 255, update_hsv)
+        
+        cv2.createTrackbar("Housing H Min", "Trackbars", HOUSING_LOWER_RANGE[0], 180, update_hsv)
+        cv2.createTrackbar("Housing S Min", "Trackbars", HOUSING_LOWER_RANGE[1], 255, update_hsv)
+        cv2.createTrackbar("Housing V Min", "Trackbars", HOUSING_LOWER_RANGE[2], 255, update_hsv)
+        cv2.createTrackbar("Housing H Max", "Trackbars", HOUSING_UPPER_RANGE[0], 180, update_hsv)
+        cv2.createTrackbar("Housing S Max", "Trackbars", HOUSING_UPPER_RANGE[1], 255, update_hsv)
+        cv2.createTrackbar("Housing V Max", "Trackbars", HOUSING_UPPER_RANGE[2], 255, update_hsv)
+        
+        cv2.createTrackbar("threshold", "Trackbars", THRESHOLD, 500, update_hsv)
 
 
     # Create DepthAI pipeline
@@ -100,19 +95,20 @@ def camera_init():
 def update_hsv(_):
     global HOUSING_LOWER_RANGE, HOUSING_UPPER_RANGE, REFLECT_LOWER_RANGE, REFLECT_UPPER_RANGE,THRESHOLD
     try:
-        reflector_h_min = cv2.getTrackbarPos("Reflector H Min", "Trackbars")
-        reflector_s_min = cv2.getTrackbarPos("Reflector S Min", "Trackbars")
-        reflector_v_min = cv2.getTrackbarPos("Reflector V Min", "Trackbars")
-        reflector_h_max = cv2.getTrackbarPos("Reflector H Max", "Trackbars")
-        reflector_s_max = cv2.getTrackbarPos("Reflector S Max", "Trackbars")
-        reflector_v_max = cv2.getTrackbarPos("Reflector V Max", "Trackbars")
+        if(not HEADLESS):
+            reflector_h_min = cv2.getTrackbarPos("Reflector H Min", "Trackbars")
+            reflector_s_min = cv2.getTrackbarPos("Reflector S Min", "Trackbars")
+            reflector_v_min = cv2.getTrackbarPos("Reflector V Min", "Trackbars")
+            reflector_h_max = cv2.getTrackbarPos("Reflector H Max", "Trackbars")
+            reflector_s_max = cv2.getTrackbarPos("Reflector S Max", "Trackbars")
+            reflector_v_max = cv2.getTrackbarPos("Reflector V Max", "Trackbars")
 
-        housing_h_min = cv2.getTrackbarPos("Housing H Min", "Trackbars")
-        housing_s_min = cv2.getTrackbarPos("Housing S Min", "Trackbars")
-        housing_v_min = cv2.getTrackbarPos("Housing V Min", "Trackbars")
-        housing_h_max = cv2.getTrackbarPos("Housing H Max", "Trackbars")
-        housing_s_max = cv2.getTrackbarPos("Housing S Max", "Trackbars")
-        housing_v_max = cv2.getTrackbarPos("Housing V Max", "Trackbars")
+            housing_h_min = cv2.getTrackbarPos("Housing H Min", "Trackbars")
+            housing_s_min = cv2.getTrackbarPos("Housing S Min", "Trackbars")
+            housing_v_min = cv2.getTrackbarPos("Housing V Min", "Trackbars")
+            housing_h_max = cv2.getTrackbarPos("Housing H Max", "Trackbars")
+            housing_s_max = cv2.getTrackbarPos("Housing S Max", "Trackbars")
+            housing_v_max = cv2.getTrackbarPos("Housing V Max", "Trackbars")
 
         threshold = cv2.getTrackbarPos("threshold", "Trackbars") / 1000
 
@@ -211,11 +207,12 @@ def get_cones(isTest=False, image_path = None):
     bottom_row = np.hstack((depth_frame_vis, depth_frame_vis))
     grid = np.vstack((top_row, bottom_row))
 
-    # Show the stacked frames
-    cv2.imshow("Original | Combined Mask | Depth | Chart", grid)
+    if(not HEADLESS):
+        # Show the stacked frames
+        cv2.imshow("Original | Combined Mask | Depth | Chart", grid)
 
 
-    if cv2.waitKey(1) & 0xFF == ord('q'):
-        cv2.destroyAllWindows()
-        
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            cv2.destroyAllWindows()
+            
     return object_positions

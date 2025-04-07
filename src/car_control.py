@@ -1,6 +1,7 @@
 import numpy as np
 import math
-from scipy.optimize import root_scalar
+
+from utils import DISTANCE_TO_STEAR_ANGLE, DISTANCE_TO_BRAKE, SPEED_SENSITIVITY
 
 def get_controls(cone_values):
     
@@ -66,7 +67,6 @@ def find_y_given_x(x_value, x_coords, y_coords):
 
 def find_stearing_angle(cone_values):
     
-    DISTANCE_TO_STEAR_ANGLE = 2.5
     
     left_cones, right_cones  = cone_values
 
@@ -87,7 +87,6 @@ def find_stearing_angle(cone_values):
     return angle
     
 def find_speed(cone_values):
-    SPEED_SENSITIVITY = 10
     
     
     curviness = ((calculate_curviness(cone_values[1][0],cone_values[1][1]) + calculate_curviness(cone_values[0][0],cone_values[0][1])))/2
@@ -134,7 +133,6 @@ def calculate_curviness(x, y):
     return min(total_curvature / max_possible_curvature, 1)
 
 def find_brake(cone_values):
-    DISTANCE_TO_BRAKE = 1.5
 
     
     left_cone, right_cone  = cone_values

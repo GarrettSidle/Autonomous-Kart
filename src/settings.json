@@ -1,0 +1,11 @@
+{
+    "headless"  : true,
+    "steer-angle" : 2.5,
+    "brake-distance" : 1.5,
+    "speed-sensitivity" : 10,
+    "reflect-lower-range" : [0, 117, 105],
+    "reflect-upper-range": [103, 255, 255],
+    "housing-lower-range": [0, 197, 197],
+    "housing-upper-range": [34, 255, 255]
+
+}

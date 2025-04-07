@@ -11,12 +11,12 @@ import numpy as np
 # current stearing angle    x
 
 
-DISTANCE_TO_BRAKE = 1.5
-STEARING_ARROW_LENGTH = 2.5
+from utils import HEADLESS, DISTANCE_TO_BRAKE, DISTANCE_TO_STEAR_ANGLE
 
 
-plt.ion()  # Enable interactive mode
-fig, ax = plt.subplots(figsize=(8, 6))
+if not HEADLESS:
+    plt.ion()  # Enable interactive mode
+    fig, ax = plt.subplots(figsize=(8, 6))
 
 
 
@@ -37,6 +37,9 @@ def graph(spline_values, cone_values, controls):
     
     print(f"Steering Angle: {stearing_angle}°, Throttle: {throttle}, Brake: {brake}")
     
+    if(HEADLESS):
+        return
+    
         
     ax.clear()  # Clear previous frame
     
@@ -48,8 +51,8 @@ def graph(spline_values, cone_values, controls):
     angle_rad = np.radians(stearing_angle)
 
     # Calculate the endpoint based on the length and angle
-    x_end = STEARING_ARROW_LENGTH * np.sin(angle_rad)
-    y_end = STEARING_ARROW_LENGTH * np.cos(angle_rad)
+    x_end = DISTANCE_TO_STEAR_ANGLE * np.sin(angle_rad)
+    y_end = DISTANCE_TO_STEAR_ANGLE * np.cos(angle_rad)
 
     
 
