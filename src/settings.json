@@ -1,5 +1,5 @@
 {
-    "headless"  : true,
+    "headless"  : false ,
     "steer-angle" : 2.5,
     "brake-distance" : 1.5,
     "speed-sensitivity" : 10,

@@ -5,8 +5,7 @@ import os
 # Get the absolute path to the directory where the script lives
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Join it with your config file (whether it's in the same folder or in a subfolder like 'config')
-config_path = os.path.join(script_dir, 'settings.json')  # or just 'settings.json' if in same folder
+config_path = os.path.join(script_dir, 'settings.json')  
 
 # Load the JSON config
 with open(config_path, 'r') as file:

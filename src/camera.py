@@ -11,7 +11,7 @@ from utils import HEADLESS, HOUSING_LOWER_RANGE, HOUSING_UPPER_RANGE, REFLECT_LO
 
 THRESHOLD    = 80
 
-HORIZONTAL_FOV = 69  
+HORIZONTAL_FOV = 150 
 FRAME_WIDTH = 640    
 CENTER_X = FRAME_WIDTH / 2 
 
@@ -92,6 +92,7 @@ def camera_init():
     
     device = dai.Device(pipeline)
     
+    
 def update_hsv(_):
     global HOUSING_LOWER_RANGE, HOUSING_UPPER_RANGE, REFLECT_LOWER_RANGE, REFLECT_UPPER_RANGE,THRESHOLD
     try:
@@ -163,11 +164,11 @@ def get_cones(isTest=False, image_path = None):
     object_positions = []
 
     for contour in contours:
-        if cv2.contourArea(contour) >= .0001:
+        if cv2.contourArea(contour) >= 0:
             x, y, w, h = cv2.boundingRect(contour)
             cx, cy = x + w // 2, y + h // 2
             
-            angle_x = ((cx - CENTER_X) / CENTER_X) * (HORIZONTAL_FOV / 2)
+            angle_x = 90 - ((cx - CENTER_X) / CENTER_X) * (HORIZONTAL_FOV / 2)
             angle_x = math.radians(angle_x)
             
 
@@ -178,8 +179,8 @@ def get_cones(isTest=False, image_path = None):
             
             depth_value = (depth_value / 1000) 
             
-            pltx = depth_value * math.cos(90 - angle_x)
-            plty = depth_value * math.sin(90 - angle_x)
+            pltx = depth_value * math.cos(angle_x)
+            plty = depth_value * math.sin(angle_x)
             
             area = cv2.contourArea(contour) / 1000.0
             if(depth_value == 0):
@@ -187,6 +188,10 @@ def get_cones(isTest=False, image_path = None):
         
             elif(depth_value >= -0.038 * np.log((area + THRESHOLD)**2) - 0.703 * np.log(area + THRESHOLD) + 0.07 or (depth_value >= 1.5 and area != 0)):
                 # Draw bounding box and depth value
+                print(math.degrees(angle_x))
+                print(depth_value)
+                print(pltx, plty)
+                
                 cv2.rectangle(video_frame, (x, y), (x + w, y + h), (0, 255, 0), 1)
                 cv2.circle(video_frame, (cx, cy), 3, (255, 0, 0), -1)
                 
