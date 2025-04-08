@@ -158,25 +158,28 @@ def calculate_splines(left_cones, right_cones):
     left_cone_x_values = [cone[0] for cone in left_cones]
     left_cone_y_values = [cone[1] for cone in left_cones]
     
-    # Create splines for left and right cones
-    left_spline  = None
-    right_spline = None
+# Linearly interpolate between consecutive points to get the x and y values for the lines
+    # For left cones
+    left_spline_x_values = []
+    left_spline_y_values = []
     
-    
-    if len(left_cone_x_values) > 2 and len(set(left_cone_x_values)) == len(left_cone_x_values):
-        left_spline = interp1d(left_cone_x_values, left_cone_y_values)
-        left_spline_x_values = np.linspace(min(left_cone_x_values), max(left_cone_x_values), 100)
-        left_spline_y_values = left_spline(left_spline_x_values)
-    else:
-        left_spline_x_values, left_spline_y_values = left_cone_x_values, left_cone_y_values
+    for i in range(len(left_cone_x_values) - 1):
+        left_spline_x_values.append(left_cone_x_values[i])
+        left_spline_y_values.append(left_cone_y_values[i])
+        # Add a line to the next point
+        left_spline_x_values.append(left_cone_x_values[i + 1])
+        left_spline_y_values.append(left_cone_y_values[i + 1])
 
-    if len(right_cone_x_values) > 2 and len(set(right_cone_x_values)) == len(right_cone_x_values):
-        right_spline = interp1d(right_cone_x_values, right_cone_y_values)
-        right_spline_x_values = np.linspace(min(right_cone_x_values), max(right_cone_x_values), 100)
-        right_spline_y_values = right_spline(right_spline_x_values)
-    else:
-        right_spline_x_values, right_spline_y_values = right_cone_x_values, right_cone_y_values
-        
+    # For right cones
+    right_spline_x_values = []
+    right_spline_y_values = []
+    for i in range(len(right_cone_x_values) - 1):
+        right_spline_x_values.append(right_cone_x_values[i])
+        right_spline_y_values.append(right_cone_y_values[i])
+        # Add a line to the next point
+        right_spline_x_values.append(right_cone_x_values[i + 1])
+        right_spline_y_values.append(right_cone_y_values[i + 1])
+
     spline_values = (
         (left_spline_x_values , left_spline_y_values),
         (right_spline_x_values, right_spline_y_values))
